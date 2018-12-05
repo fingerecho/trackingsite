@@ -8,7 +8,6 @@ class Visiter(models.Model):
 		('1','Friends'),
 		('2','myself')
 	)
-
 	first_time_visit = models.CharField(max_length=20)
 	last_time_visit  = models.CharField( max_length=20,blank = True )
 	friend_status = models.CharField(max_length=1,choices=FRIENDS_SIZE)
