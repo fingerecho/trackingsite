@@ -1,0 +1,9 @@
+**/__pycache__
+*.swp
+*.pyc
+*.conf
+**/certificate
+**/code_migrations
+**/settings
+nohup.out
+trackingsite_bak_181124.sql
