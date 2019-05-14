@@ -12,7 +12,20 @@ class MULP(Process):
 	def run(self):
 		init_(self.port)
 def init_python_pro():
-	if not 1==call(['python3','-m','compileall','serv.py']):
+	flag_0 = not 1==call(['python3','-m','compileall','.'])
+	#flag_1 = not 1==call(['mkdir','__pycache__/models'])
+	#flag_2 = not 1==call(['mkdir','__pycache__/utils'])
+	flag_3 = not 1==call(['mv','utils/__pycache__/__init__.cpython-36.pyc','__pycache__/utils'])
+	flag_3 = not 1==call(['mv','utils/__pycache__/utils.cpython-36.pyc','__pycache__/utils'])
+	flag_3 = not 1==call(['mv','models/__pycache__/__init__.cpython-36.pyc','__pycache__/models'])
+	flag_3 = not 1==call(['mv','models/__pycache__/models.cpython-36.pyc','__pycache__/models'])
+	#flag_5 = not 1==call(['mv','__pycache__/models/__init__.cpython-36.pyc','__pycache__/models/__init__.pyc'])
+#	flag_6 = not 1==call(['mv','__pycache__/models/models.cpython-36.pyc','__pycache__/models/models.pyc'])
+#	flag_7 = not 1==call(['mv','__pycache__/utils/__init__.cpython-36.pyc','__pycache__/models/__init__.pyc'])
+#	flag_7 = not 1==call(['mv','__pycache__/utils/utils.cpython-36.pyc','__pycache__/models/utils.pyc'])
+#	
+	# if flag_0 and flag_1 and flag_2 and flag_3 and flag_4:
+	if True:	
 		print("compile python program finished")
 		return 1
 	else:

@@ -1,2 +1,4 @@
-python3 manage.py runserver --settings=trackself.settings.debug
+python manage.py runserver --settings=trackingsite.settings.check
 
+administrator
+asdffdsaasdf

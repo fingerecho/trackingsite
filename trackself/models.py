@@ -32,7 +32,6 @@ class Visiter(models.Model):
 class Pageview(models.Model):
 	id = models.AutoField(primary_key=True)
 	random = models.CharField(max_length=64,default='0')
-	visiter = models.ForeignKey(Visiter,to_field='id',on_delete=models.CASCADE,verbose_name="访客")
 	brow_page = models.CharField(max_length=64,default="-",verbose_name="浏览页面")
 	referer = models.CharField(max_length=256,default="-",verbose_name="来路")
 	language = models.CharField(max_length=64,default="-",verbose_name="语言")

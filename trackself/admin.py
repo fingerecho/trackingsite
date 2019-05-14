@@ -11,7 +11,7 @@ class VisiterAdmin(admin.ModelAdmin):
 	pass
 
 class PageviewAdmin(admin.ModelAdmin):
-	list_display = ['residencetime','brow_page','referer','language']
+	list_display = ['id','random','residencetime','brow_page','referer','language']
 	#fields = ['residencetime','brow_page','referer','language']
 	exclude  = []
 	pass

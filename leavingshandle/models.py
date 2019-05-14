@@ -10,6 +10,8 @@ class Leavings(models.Model):
 	address2 = models.CharField(max_length=512,blank=True)
 	content = models.CharField(max_length=1024*2*2,blank=True)
 	#subtime = models.DateField()
+	def __str__(self):
+		return self.usernames
 
 
 
