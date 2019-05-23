@@ -6,6 +6,7 @@ except ImportError:
 import time
 
 test_url  =  "ws://127.0.0.1:65532/ht"
+test_url  =   "ws://gitee.fyping.cn:65533/ht"
 def on_message(ws, message):
     print(message)
 

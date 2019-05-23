@@ -28,6 +28,9 @@ class Pageview(Base):
     __tablename__ = "trackself_pageview"
     id = Column(Integer,primary_key=True)
     random = Column(String(64),default='0')
+    view_time = Column(String(64),default='-')
+    visiter_id = Column(Integer,default=0)
+    tokens     = Column(String(256),nullable=True,default="---**---")
     #visiter_id = Column(Integer,ForeignKey("visiter.id",ondelete="CASCADE"))
     brow_page = Column(String(64),default="-")
     referer = Column(String(256),default="-")

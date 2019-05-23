@@ -2,6 +2,7 @@ from ua_parser import user_agent_parser
 from time import time
 from random import sample
 from string import ascii_letters
+import geoip2.database
 
 GEO_LITE_CITY_MMDB_FILE = "/srv/data/geoip2/city/GeoLite2-City_20181120/GeoLite2-City.mmdb"
 
@@ -33,6 +34,7 @@ def genera_uuid(ua_str:str):
 def generate_random_str():
 	return "".join(sample(ascii_letters,8))
 def ip_to_isp_loc(ip):
-	reader = geoip2.database.Reader(GEO_LITE_CITY_MMDB_FILE)
-	data = reader.city(ip)
-	return "-isp-",str(data.city.name)
+	#reader = geoip2.database.Reader(GEO_LITE_CITY_MMDB_FILE)
+	#data = reader.city(ip)
+	#return "-isp-",str(data.city.name)
+	return "-isp-","-loc-"
