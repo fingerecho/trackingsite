@@ -1,8 +1,0 @@
-[2019-08-06 09:46:59.880] [sharedprocess] [info] main {"machineId":"c9c3abd2725ba7351e0494b19e4b5546dce624bee3fdc41d27e81476a370e386"}
-[2019-08-06 09:47:39.865] [sharedprocess] [info] Starting to clean up unused language packs.
-[2019-08-06 09:49:36.577] [sharedprocess] [info] Installing extension: ms-python.python
-[2019-08-06 09:49:40.316] [sharedprocess] [info] Downloaded extension: ms-python.python /tmp/9cef0817-5f02-4fb0-b4c1-3e1fe5882c59
-[2019-08-06 09:49:41.458] [sharedprocess] [info] Extracted extension to /root/.vscode/extensions/.ms-python.python-2019.6.24221: ms-python.python
-[2019-08-06 09:49:41.459] [sharedprocess] [info] Renamed to /root/.vscode/extensions/ms-python.python-2019.6.24221
-[2019-08-06 09:49:41.463] [sharedprocess] [info] Installation completed. ms-python.python
-[2019-08-06 09:49:41.534] [sharedprocess] [info] Extensions installed successfully: ms-python.python

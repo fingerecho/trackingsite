@@ -93,6 +93,9 @@ async def app(scope, receive, send):
 
 if __name__ == "__main__":
     port = sys.argv[1]
+    if debug:
+        if not port:
+            port = 8001
     if port:
         uvicorn.run(app=app,host=HOST,port=int(port),debug=DEBUG_MODE,log_level=LOG_LEVEL)
         print("startind server...")
