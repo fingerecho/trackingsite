@@ -1,0 +1,9 @@
+[Unit]
+Description=start visitrck service
+
+[Service]
+ExecStart='/usr/local/bin/python3.6 /srv/trackingsite/visitrck/__pycache__/serv.cpython-36.pyc 8010 && /usr/local/bin/python3.6 /srv/trackingsite/visitrck/__pycache__/serv.cpython-36.pyc 8011 && /usr/local/bin/python3.6 /srv/trackingsite/visitrck/__pycache__/serv.cpython-36.pyc 8012 && /usr/local/bin/python3.6 /srv/trackingsite/visitrck/__pycache__/serv.cpython-36.pyc 8013 && /usr/local/bin/python3.6 /srv/trackingsite/visitrck/__pycache__/serv.cpython-36.pyc 8014 && /usr/local/bin/python3.6 /srv/trackingsite/visitrck/__pycache__/serv.cpython-36.pyc 8015 && /usr/local/bin/python3.6 /srv/trackingsite/visitrck/__pycache__/serv.cpython-36.pyc 8016 && /usr/local/bin/python3.6 /srv/trackingsite/visitrck/__pycache__/serv.cpython-36.pyc 8017'    
+Restart=allways
+RestartSec=5
+
+
