@@ -3,6 +3,7 @@
 #SPARQL_AUTH_PWD="fusekifuseki123!@#"
 
 DEBUG_MODEL = True
+FUSEKI_BASE = "/opt/fuseki/fuseki"
 
 SPARQL_AUTH_USR=""
 SPARQL_AUTH_PWD=""

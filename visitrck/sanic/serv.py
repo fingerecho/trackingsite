@@ -1,28 +1,51 @@
 import sys
-import os
-from time import ctime,time
-from datetime import datetime
-from uuid import uuid4
 
+'''
 from utils.utils import genera_uuid
 from utils.utils import ua_paser_str
 from utils.utils import ip_to_isp_loc
 from utils.utils import generate_random_str
+'''
 
-from database.rdf import insert 
+from flask import render_template
+
+from utils.utils import ua_paser_str
+
 import config
 
-from rdflib import Graph, Literal, URIRef, term
+from serv_method import pase_headers, init_graph, fuseki_squery_cmd, fuseki_sget_cmd
 
 import uvicorn
-NAMESPACE_PREFIX = config.NAMESPACE_PREFIX
 
+from jinja2 import Environment, FileSystemLoader
+from urllib.parse import unquote, parse_qsl
 debug = config.DEBUG_MODEL
 
 
 HOST = "0.0.0.0"
 DEBUG_MODE = False
 LOG_LEVEL  = "debug"
+
+async def uvicorn_render_template(send,body_file,**context):
+
+    env = Environment(loader=FileSystemLoader("./"))
+    template = env.get_template(body_file)
+
+    content = template.render(**context)
+    await send({
+        'type': 'http.response.start',
+        'status': 200,
+        'headers': [
+            [b'content-type', b'text/html'],
+        ]
+    })
+    await send({
+        'type': 'http.response.body',
+        'headers': [
+            [b'content-type', b'text/html'],
+        ],
+        'body': content.encode('utf-8'),
+    })
 
 async def read_tokens(receive):
     body = b""
@@ -34,62 +57,57 @@ async def read_tokens(receive):
     tokens = body.decode("utf-8")
     return tokens
 
-def init_graph(tokens,ip,device,os,browser,ua):
-    g = Graph()
-    tokens = NAMESPACE_PREFIX + tokens
-    if debug:
-        g.add((URIRef(tokens),URIRef(u"urn:recordtime"),Literal(str(time()))))
-    else:
-        g.add((URIRef(tokens), URIRef(u"urn:recordtime"), Literal(str(str(datetime.now())[:-8]) + "0")))
-    g.add((URIRef(tokens),URIRef(u"urn:useragent"),Literal(ua)))
-    if ip:
-        g.add((URIRef(tokens),URIRef(u"urn:ip"),Literal(ip)))
-    g.add((URIRef(tokens),URIRef(u"urn:device"),Literal(device)))
-    if os:
-        g.add((URIRef(tokens),URIRef(u"urn:os"),Literal(os)))
-    g.add((URIRef (tokens),URIRef(u"urn:browser"),Literal(browser)))
-    try:
-        insert(g)
-    except Exception as e:
-        print("error:",str(e)," could not insert graph into TDB")
-        return e
-    else:
-        return False
-
-async def app(scope, receive, send):
-
-    assert scope['type'] == 'http'
+async def trackingsite_method(scope,receive,send):
     tokens = await read_tokens(receive)
-    headers_ = scope['headers']
-    ua,ip = "",""
-    for i in headers_:
-        if not ua:
-            if i[0].decode("utf-8") == "user-agent":
-                ua = i[1].decode('utf-8')
-        if not ip:
-            if i[0].decode('utf-8') in ['host','X-Real-Ip']:
-                ip = i[1].decode('utf-8')
+    ua, ip = pase_headers(scope['headers'])
     device, os, browser = ua_paser_str(ua)
-    #isp, location = ip_to_isp_loc(ip)    
-    res = init_graph(tokens,ip,device,os,browser,ua)
+    # isp, location = ip_to_isp_loc(ip)
+    res = init_graph(tokens, ip, device, os, browser, ua)
     if not res:
         await send({
             'type': 'http.response.start',
             'status': 204
         })
         await send({
-            'type':'http.response.body'
+            'type': 'http.response.body'
         })
     else:
         await send({
-            'type':'http.response.start',
-            'status':200,
+            'type': 'http.response.start',
+            'status': 200,
         })
         await send({
-            'type':'http.response.body',
-            'Content-Length':str(len(str(res))),
-            'body':(str(res)).encode('utf-8')
+            'type': 'http.response.body',
+            'Content-Length': str(len(str(res))),
+            'body': (str(res)).encode('utf-8')
         })
+
+async def app(scope, receive, send):
+
+    assert scope['type'] == 'http'
+    if scope['method'] == 'GET':
+        if scope['path'].lstrip("/") == 'sparql':
+            if not scope['query_string']:
+                await uvicorn_render_template(send,"template/sparql_search.html")
+            else:
+                qsld = dict(parse_qsl(scope['query_string']))
+                if qsld[b'format'] == b'auto':
+                    res = fuseki_squery_cmd(qsld[b'query'])
+                elif qsld[b'format'] == b'text/turtle':
+                    res = fuseki_sget_cmd()
+                #await uvicorn_render_template(send, res)
+                await send({
+                    'type': 'http.response.start',
+                    'status': 200,
+                })
+                await send({
+                    'type': 'http.response.body',
+                    'Content-Length': str(len(str(res))),
+                    'body': res
+                })
+    if scope['method'] == 'POST':
+        if scope['path'].lstrip("/") in ['pv','uv']:
+            await trackingsite_method(scope,receive,send)
 
 if __name__ == "__main__":
     port = sys.argv[1]
