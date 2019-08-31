@@ -17,7 +17,7 @@ def pase_headers(headers_):
             if i[0].decode("utf-8") == "user-agent":
                 ua = i[1].decode('utf-8')
         if not ip:
-            if i[0].decode('utf-8') in ['host', 'X-Real-Ip']:
+            if i[0].decode('utf-8') in ['x-real-ip','x-forwarded-for']:
                 ip = i[1].decode('utf-8')
     return ua,ip
 
@@ -50,7 +50,7 @@ def fuseki_squery_cmd(qs,service=config.SPARQL_QUERY_URI,timeout=config.SPARQL_T
     try:
         res = run(['{fuseki_base}/bin/s-query'.format(fuseki_base=config.FUSEKI_BASE),
                    '--service={endpointURL}'.format(endpointURL=service),
-                   '{qs}'.format(qs=qs.decode('utf-8'))],stdout=PIPE,timeout=timeout)
+                   '{qs}'.format(qs=qs.decode('utf-8') if isinstance(qs,bytes) else qs )],stdout=PIPE,timeout=timeout)
     except FileNotFoundError as ffe:
         return "FileNotFoundError on fuseki_squery_cmd/serv_method.py %s"%(str(ffe))
     except Exception as ffe:
@@ -68,4 +68,20 @@ def fuseki_sget_cmd(endpointURL=config.SPARQL_QUERY_URI,timeout=config.SPARQL_TI
     except Exception as ffe:
         return "Exception on fuseki_squery_cmd/serv_method.py %s"%(str(ffe))
     return res.stdout
+
+def parse_upstream_nginx_conf_port(filepath=config.NGINX_CONF_PATH):
+    with open(filepath,"r",encoding='utf-8') as f:
+        text_lines = f.readlines()
+        ports = []
+        start_index = -1
+        end_index_alias = 0
+        for line in text_lines:
+            if "upstream trackingsite_uvicorn{" == line.strip("\n").strip(" "):
+                while True:
+                    end_index_alias += 1
+                    if text_lines[text_lines.index(line)+end_index_alias].strip("\n").strip(" ") == "}":
+                        break
+                    ports.append(text_lines[text_lines.index(line)+end_index_alias].split("server")[-1].strip("\n").strip(" ").strip(";").split(":")[1])
+        return ports
+
 

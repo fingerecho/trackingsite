@@ -1,4 +1,5 @@
 import sys
+import time
 
 '''
 from utils.utils import genera_uuid
@@ -13,7 +14,7 @@ from utils.utils import ua_paser_str
 
 import config
 
-from serv_method import pase_headers, init_graph, fuseki_squery_cmd, fuseki_sget_cmd
+from serv_method import pase_headers, init_graph, fuseki_squery_cmd, fuseki_sget_cmd, parse_upstream_nginx_conf_port
 
 import uvicorn
 
@@ -54,7 +55,13 @@ async def read_tokens(receive):
         message = await receive()
         body = message.get('body',b'')
         more_body = message.get('more_body',False)
-    tokens = body.decode("utf-8")
+    tokens = body.decode("utf-8").split("&")
+    for token in tokens:
+        if token.startswith("tokens"):
+            tokens = token.lstrip("tokens=null")
+            break
+    if isinstance(tokens,list):
+        tokens="localtime-"+str(time.time())
     return tokens
 
 async def trackingsite_method(scope,receive,send):
@@ -62,6 +69,7 @@ async def trackingsite_method(scope,receive,send):
     ua, ip = pase_headers(scope['headers'])
     device, os, browser = ua_paser_str(ua)
     # isp, location = ip_to_isp_loc(ip)
+    print(tokens, ip, device, os, browser, ua)
     res = init_graph(tokens, ip, device, os, browser, ua)
     if not res:
         await send({
@@ -86,7 +94,7 @@ async def app(scope, receive, send):
 
     assert scope['type'] == 'http'
     if scope['method'] == 'GET':
-        if scope['path'].lstrip("/") == 'sparql':
+        if scope['path'].lstrip("/") in ['sparql','turtle']:
             if not scope['query_string']:
                 await uvicorn_render_template(send,"template/sparql_search.html")
             else:
@@ -102,18 +110,24 @@ async def app(scope, receive, send):
                 })
                 await send({
                     'type': 'http.response.body',
-                    'Content-Length': str(len(str(res))),
-                    'body': res
+                    'Content-Length': str(len(str(res))) if isinstance(res,str) else str(len(str(res.decode('utf-8')))),
+                    'body': res.encode('utf-8') if isinstance(res,str) else res
                 })
     if scope['method'] == 'POST':
         if scope['path'].lstrip("/") in ['pv','uv']:
             await trackingsite_method(scope,receive,send)
 
 if __name__ == "__main__":
-    port = sys.argv[1]
+    port = sys.argv[1] if len(sys.argv) > 1 else None
     if debug:
         if not port:
             port = 8001
     if port:
         uvicorn.run(app=app,host=HOST,port=int(port),debug=DEBUG_MODE,log_level=LOG_LEVEL)
-        print("startind server...")
+        print("startind  {port} server...".format(port=port))
+    else:
+        ports = parse_upstream_nginx_conf_port()
+        for po_ in ports:
+            uvicorn.run(app=app,host=HOST,port=int(po_),debug=DEBUG_MODE,log_level=LOG_LEVEL)
+
+

@@ -1,6 +1,0 @@
-ua_parser
-tornado
-websocket-client
-geoip2
-rdflib
-sqlalchemy
