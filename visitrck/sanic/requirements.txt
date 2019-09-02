@@ -1,0 +1,7 @@
+uvicorn
+rdflib
+flask
+jinja2
+gunicorn
+ua_parser
+geoip2
