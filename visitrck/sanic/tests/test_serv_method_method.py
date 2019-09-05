@@ -1,7 +1,7 @@
 import sys
 sys.path.append("..")
 
-from serv_method import init_graph, parse_upstream_nginx_conf_port, fuseki_squery_cmd
+from serv_method import init_graph, parse_upstream_nginx_conf_port, fuseki_squery_cmd, fuseki_squery_cmd_echarts
 import unittest
 
 

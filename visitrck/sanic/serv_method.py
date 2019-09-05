@@ -1,10 +1,15 @@
 
+import json
 from time import ctime,time
 from datetime import datetime
 from rdflib import Graph, Literal, URIRef, term
 from database.rdf import insert
-
+from pyecharts import Page, Style
+from pyecharts import  Graph as EHGraph
 from subprocess import run, PIPE
+from jinja2 import Template
+#from flask import render_template
+from template.graph_echarts_render import template as custom_t
 
 import config
 debug = config.DEBUG_MODEL
@@ -68,6 +73,43 @@ def fuseki_sget_cmd(endpointURL=config.SPARQL_QUERY_URI,timeout=config.SPARQL_TI
     except Exception as ffe:
         return "Exception on fuseki_squery_cmd/serv_method.py %s"%(str(ffe))
     return res.stdout
+
+# usage:   `s-query --service=endpointURL 'query string'`
+def fuseki_squery_cmd_echarts(qs,service=config.SPARQL_QUERY_URI,timeout=config.SPARQL_TIMEOUT):
+    if isinstance(qs,bytes):
+        qs = qs.decode("utf-8")
+    try:
+        res = run(['{fuseki_base}/bin/s-query'.format(fuseki_base=config.FUSEKI_BASE),
+                   '--service={endpointURL}'.format(endpointURL=service),
+                   '{qs}'.format(qs=qs if isinstance(qs,bytes) else qs )],stdout=PIPE,timeout=timeout)
+        result = json.loads(res.stdout.decode('utf-8'))
+        nodes = []
+        links = []
+        bindings  = result['results']['bindings']
+        head = result['head']['vars']
+        for bd in bindings:
+            nodes.append({"name":bd[head[0]]['value'],'symbolSize':30,"value":1})
+            nodes.append({'name':bd[head[2]]['value'],'symbolSize':10,"value":2})
+            links.append({'source':bd[head[0]]['value'],'target':bd[head[2]]['value']})
+        page = Page()
+        style = Style(width=800,height=600)
+        chart = EHGraph('relationship',**style.init_style)
+        chart.add("", nodes, links, label_pos="right", graph_repulsion=50,
+                  is_legend_show=False, line_curve=0.2, label_text_color=None)
+        page.add(chart)
+        page.render()
+        js_markup = page.render_embed()
+        #with open("js_mk.html","w",encoding='utf-8') as f:
+        #    f.write(js_markup)
+        _template = Template(custom_t)
+        resp = _template.render(__markup_custom=js_markup)
+
+    except FileNotFoundError as ffe:
+        return "FileNotFoundError on fuseki_squery_cmd_echarts/serv_method.py %s"%(str(ffe))
+    except Exception as ffe:
+        return "Exception on fuseki_squery_cmd_echarts/serv_method.py %s"%(str(ffe))
+    return resp
+
 
 def parse_upstream_nginx_conf_port(filepath=config.NGINX_CONF_PATH):
     with open(filepath,"r",encoding='utf-8') as f:

@@ -14,8 +14,7 @@ from utils.utils import ua_paser_str
 
 import config
 
-from serv_method import pase_headers, init_graph, fuseki_squery_cmd, fuseki_sget_cmd, parse_upstream_nginx_conf_port
-
+from serv_method import pase_headers, init_graph, fuseki_squery_cmd, fuseki_sget_cmd, fuseki_squery_cmd_echarts, parse_upstream_nginx_conf_port
 import uvicorn
 
 from jinja2 import Environment, FileSystemLoader
@@ -25,28 +24,38 @@ debug = config.DEBUG_MODEL
 
 HOST = "0.0.0.0"
 DEBUG_MODE = False
+
 LOG_LEVEL  = "debug"
 
-async def uvicorn_render_template(send,body_file,**context):
+normal_res_st = {
+    'type': 'http.response.start',
+    'status': 200,
+}
+normal_res_ed = {
+    'type': 'http.response.body',
+}
 
+async def uvicorn_render_template(send,body_file,content_type=b"text/html",**context):
+    global normal_res_st, normal_res_ed
     env = Environment(loader=FileSystemLoader("./"))
     template = env.get_template(body_file)
-
-    content = template.render(**context)
-    await send({
-        'type': 'http.response.start',
-        'status': 200,
+    content = template.render(**context).encode('utf-8')
+    content_length = str(len(content.decode('utf-8')))
+    normal_res_st.update({
         'headers': [
-            [b'content-type', b'text/html'],
-        ]
-    })
-    await send({
-        'type': 'http.response.body',
-        'headers': [
-            [b'content-type', b'text/html'],
+            [b'content-type', content_type],
         ],
-        'body': content.encode('utf-8'),
     })
+    normal_res_ed.update({
+        'headers': [
+            [b'content-type', content_type],
+        ],
+        'body': content,
+        #'Content-Length':content_length
+        }
+    )
+    await send(normal_res_st)
+    await send(normal_res_ed)
 
 async def read_tokens(receive):
     body = b""
@@ -65,33 +74,26 @@ async def read_tokens(receive):
     return tokens
 
 async def trackingsite_method(scope,receive,send):
+    global  normal_res_st, normal_res_ed
     tokens = await read_tokens(receive)
     ua, ip = pase_headers(scope['headers'])
     device, os, browser = ua_paser_str(ua)
     # isp, location = ip_to_isp_loc(ip)
-    print(tokens, ip, device, os, browser, ua)
+    #print(tokens, ip, device, os, browser, ua)
     res = init_graph(tokens, ip, device, os, browser, ua)
     if not res:
-        await send({
-            'type': 'http.response.start',
-            'status': 204
-        })
-        await send({
-            'type': 'http.response.body'
-        })
+        normal_res_st.update({'status':204})
     else:
-        await send({
-            'type': 'http.response.start',
-            'status': 200,
+        normal_res_ed.update({
+            'body': (str(res)).encode('utf-8'),
+            #'Content-Length': str(len(str(res))),
         })
-        await send({
-            'type': 'http.response.body',
-            'Content-Length': str(len(str(res))),
-            'body': (str(res)).encode('utf-8')
-        })
+    await send(normal_res_st)
+    await send(normal_res_ed)
+
 
 async def app(scope, receive, send):
-
+    global  normal_res_st
     assert scope['type'] == 'http'
     if scope['method'] == 'GET':
         if scope['path'].lstrip("/") in ['sparql','turtle']:
@@ -101,18 +103,42 @@ async def app(scope, receive, send):
                 qsld = dict(parse_qsl(scope['query_string']))
                 if qsld[b'format'] == b'auto':
                     res = fuseki_squery_cmd(qsld[b'query'])
+                    normal_res_st.update({'headers': [
+                        [b'content-type', b'text/plain'],
+                    ],})
+                    normal_res_ed.update({'headers': [
+                        [b'content-type', b'text/plain'],
+                    ],})
                 elif qsld[b'format'] == b'text/turtle':
                     res = fuseki_sget_cmd()
+                    normal_res_st.update({'headers': [
+                        [b'content-type', b'text/plain'],
+                    ],})
+                    normal_res_ed.update({'headers': [
+                        [b'content-type', b'text/plain'],
+                    ],})
+                elif qsld[b'format'] == b'graph/echarts':
+                    res = fuseki_squery_cmd_echarts(qsld[b'query'])
+                    normal_res_st.update({'headers': [
+                        [b'content-type', b'text/html'],
+                    ],})
+                    normal_res_ed.update({'headers': [
+                        [b'content-type', b'text/html'],
+                    ],})
                 #await uvicorn_render_template(send, res)
-                await send({
-                    'type': 'http.response.start',
-                    'status': 200,
+                #res_length_ = str(len(str(res))) if isinstance(res, str) else str(len(str(res.decode('utf-8'))))
+                res        = res.encode('utf-8') if isinstance(res, str) else res
+                normal_res_ed.update({
+                    'body': res,
                 })
-                await send({
-                    'type': 'http.response.body',
-                    'Content-Length': str(len(str(res))) if isinstance(res,str) else str(len(str(res.decode('utf-8')))),
-                    'body': res.encode('utf-8') if isinstance(res,str) else res
-                })
+                await send(normal_res_st)
+                await send(normal_res_ed)
+        elif scope['path'].lstrip("/").split("/")[0] == 'static':
+            await uvicorn_render_template(send, scope['path'].lstrip("/"),content_type=b"application/javascript")
+        else:
+            normal_res_st.update({"status":204})
+            await send(normal_res_st)
+            await send(normal_res_ed)
     if scope['method'] == 'POST':
         if scope['path'].lstrip("/") in ['pv','uv']:
             await trackingsite_method(scope,receive,send)
