@@ -140,6 +140,7 @@ br { clear: both; }
 				format.remove(ctr);
 			ctr = 0;
 			format.options[ctr++] = new Option('Turtle','text/turtle');
+			format.options[ctr++] = new Option('Graph','graph/echarts');
 			/***
 			format.options[ctr++] = new Option('Turtle (beautified)','application/x-nice-turtle');
 			format.options[ctr++] = new Option('RDF/JSON','application/rdf+json');
@@ -173,6 +174,7 @@ br { clear: both; }
 			ctr = 0;
 			format.options[ctr++] = new Option('Auto','auto');
 			format.options[ctr++] = new Option('Turtle','text/turtle');
+			format.options[ctr++] = new Option('Graph','graph/echarts');
 			/**
 			format.options[ctr++] = new Option('HTML','text/html');
 			format.options[ctr++] = new Option('HTML (Faceted Browsing Links)','text/x-html+tr');
@@ -305,6 +307,7 @@ select * where { ?id ?p ?s}
 		<select name="format" id="format" onchange="javascript:format_change(this)">
 			<option value="auto" >Auto</option>
 			<option value="text/turtle" >Turtle</option>
+			<option value="graph/echarts" >Graph</option>
 			<!--
 			<option value="text/html" selected="selected">HTML</option>
 			<option value="text/x-html+tr" >HTML (Faceted Browsing Links)</option>

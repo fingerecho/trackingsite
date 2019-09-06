@@ -1,4 +1,4 @@
-
+import math
 import json
 from time import ctime,time
 from datetime import datetime
@@ -8,6 +8,7 @@ from pyecharts import Page, Style
 from pyecharts import  Graph as EHGraph
 from subprocess import run, PIPE
 from jinja2 import Template
+
 #from flask import render_template
 from template.graph_echarts_render import template as custom_t
 
@@ -85,29 +86,41 @@ def fuseki_squery_cmd_echarts(qs,service=config.SPARQL_QUERY_URI,timeout=config.
         result = json.loads(res.stdout.decode('utf-8'))
         nodes = []
         links = []
-        bindings  = result['results']['bindings']
-        head = result['head']['vars']
-        for bd in bindings:
-            nodes.append({"name":bd[head[0]]['value'],'symbolSize':30,"value":1})
-            nodes.append({'name':bd[head[2]]['value'],'symbolSize':10,"value":2})
-            links.append({'source':bd[head[0]]['value'],'target':bd[head[2]]['value']})
-        page = Page()
-        style = Style(width=800,height=600)
-        chart = EHGraph('relationship',**style.init_style)
-        chart.add("", nodes, links, label_pos="right", graph_repulsion=50,
-                  is_legend_show=False, line_curve=0.2, label_text_color=None)
-        page.add(chart)
-        page.render()
-        js_markup = page.render_embed()
-        #with open("js_mk.html","w",encoding='utf-8') as f:
-        #    f.write(js_markup)
-        _template = Template(custom_t)
-        resp = _template.render(__markup_custom=js_markup)
 
     except FileNotFoundError as ffe:
         return "FileNotFoundError on fuseki_squery_cmd_echarts/serv_method.py %s"%(str(ffe))
     except Exception as ffe:
         return "Exception on fuseki_squery_cmd_echarts/serv_method.py %s"%(str(ffe))
+    bindings = result['results']['bindings']
+    WIDTH,HEIGHT = 1200,600
+    cuts_catogory = []
+    cuts_blief    = []
+    head = result['head']['vars']
+    for bd in bindings:
+        if bd[head[0]]['value'] != '' and bd[head[2]]['value'] != '':
+            catogory_size = 50 if len(cuts_catogory) < 10 else math.ceil( 50  - len(cuts_catogory)*500/WIDTH)
+            if catogory_size < 10:
+                catogory_size = 10
+            blief_size  = catogory_size // 4
+            if bd[head[0]]['value'] not in cuts_catogory:
+                nodes.append({"name": bd[head[0]]['value'], 'symbolSize': catogory_size, "value": 0,'Category':bd[head[0]]['value'],"draggable":False})
+                cuts_catogory.append(bd[head[0]]['value'])
+            if bd[head[2]]['value'] not in cuts_blief:
+                nodes.append({'name': bd[head[2]]['value'], 'symbolSize': blief_size, "value": 1})
+                cuts_blief.append(bd[head[2]]['value'])
+            links.append({'source': bd[head[0]]['value'], 'target': bd[head[2]]['value']})
+    page = Page()
+    style = Style(width=WIDTH, height=HEIGHT)
+    chart = EHGraph('relationship', **style.init_style)
+    chart.add("", nodes, links, label_pos="right", graph_repulsion=50,edge_length=100,
+              is_legend_show=False, line_curve=0.05, label_text_color=None)
+    page.add(chart)
+    #page.render()
+    js_markup = page.render_embed()
+    #with open("js_mk.html", "w", encoding='utf-8') as f:
+    #    f.write(js_markup)
+    _template = Template(custom_t)
+    resp = _template.render(__markup_custom=js_markup)
     return resp
 
 

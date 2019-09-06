@@ -1,0 +1,10 @@
+ua_parser
+tornado
+websocket-client
+geoip2
+rdflib
+sqlalchemy
+flask_admin
+flask_bootstrap
+elasticsearch
+pyecharts==0.5.11

@@ -4,6 +4,7 @@ WORKDIR /srv/app
 COPY requirements.txt /srv/app/
 RUN pip install -r requirements.txt
 COPY . /srv/app
+EXPOSE 8000
 CMD ["gunicorn", "serv:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker"]
 
 

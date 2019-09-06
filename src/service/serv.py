@@ -82,7 +82,7 @@ async def trackingsite_method(scope,receive,send):
     #print(tokens, ip, device, os, browser, ua)
     res = init_graph(tokens, ip, device, os, browser, ua)
     if not res:
-        normal_res_st.update({'status':204})
+        normal_res_st.update({'status':200})
     else:
         normal_res_ed.update({
             'body': (str(res)).encode('utf-8'),
@@ -135,8 +135,11 @@ async def app(scope, receive, send):
                 await send(normal_res_ed)
         elif scope['path'].lstrip("/").split("/")[0] == 'static':
             await uvicorn_render_template(send, scope['path'].lstrip("/"),content_type=b"application/javascript")
+        elif scope['path'].lstrip("/").split("/")[0] == "favicon.ico":
+            await send(normal_res_st)
+            await send(normal_res_ed)
         else:
-            normal_res_st.update({"status":204})
+            normal_res_st.update({"status":200})
             await send(normal_res_st)
             await send(normal_res_ed)
     if scope['method'] == 'POST':
